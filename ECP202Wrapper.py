@@ -16,6 +16,7 @@ class ECP202:
         self.instrument.close_port_after_each_call = True
         self.instrument.clear_buffers_before_each_transaction = True
 
+        #from http://www.pego.it/images/stories/PDF/doc_tecnica/MODBUS-RTU_ECP202_EN.pdf
         self.T_AMB_REGISTER = 256
         self.T_EV_REGISTER = 257
         self.T_SET_REGISTER = 768
