@@ -50,8 +50,8 @@ class ECP202:
         else:
             return (value-65536)*0.1
 
-    def getEvaporatoTemperature(self):
-        value=self.getRegister(self.T_SET_REGISTER)
+    def getEvaporatorTemperature(self):
+        value=self.getRegister(self.T_EV_REGISTER)
         if (value<32768):
             return value*0.1
         else:
@@ -80,7 +80,7 @@ class ECP202:
         if (value<0):
             value=0.2
         value=value*10
-        r=self.setRegister(self.T_SET_REGISTER,value)
+        r=self.setRegister(self.DELTAT_SET_REGISTER,value)
         return r
 
     def getFanSettings(self):
