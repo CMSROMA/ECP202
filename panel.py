@@ -16,7 +16,7 @@ class ECP202ControlPanel(npyscreen.ActionForm):
 
         # Add the TitleText widget to the form
 #        self.port = self.add(npyscreen.TitleFilename, name="BOARD       :", value="/dev/ecp202_sn48", editable=False)
-        self.port = self.add(npyscreen.TitleFilename, name="CONNECT     :", value="/dev/ttyUSB0", editable=False)
+        self.port = self.add(npyscreen.TitleFilename, name="CONNECT     :", value="/dev/ttyUSB1", editable=False)
         self.ecp202 = ECP202(self.port.value)
         self.chStatus = not (self.ecp202.getDeviceStatus()&self.ecp202.STANDBY_MASK)
         self.switch = self.add(npyscreen.Checkbox, name = "ON/OFF", scroll_exit=True, rely=5)
@@ -30,13 +30,21 @@ class ECP202ControlPanel(npyscreen.ActionForm):
             self.defrostSwitch.value=True
         else:
             self.defrostSwitch.value=False
+        self.fanSwitch = self.add(npyscreen.Checkbox, name = "FAN ALWAYS ON", scroll_exit=True, rely=7)
+        self.fanSettings = not (self.ecp202.getFanSettings())
+        if (self.fanSettings):
+            self.fanSwitch.value=True
+        else:
+            self.fanSwitch.value=False
         self.tset_target=self.ecp202.getTargetTemperature()
-        self.tset = self.add(npyscreen.TitleText, name="TSET:", value=str(self.tset_target), rely=8)
-        self.tmon = self.add(npyscreen.TitleText, name="T        :", value="", editable=False, rely=11)
-        self.status = self.add(npyscreen.TitleText, name="STATUS        :", value="", editable=False)
-        self.alarm = self.add(npyscreen.TitleText, name="ALARM         :", value="", editable=False)
+        self.tset = self.add(npyscreen.TitleText, name="TSET:", value=str(self.tset_target), rely=9)
+        self.tmon = self.add(npyscreen.TitleText, name="T       :", value="", editable=False, rely=11)
+        self.compressorStatus = self.add(npyscreen.TitleText, name="COMPR :", value="", editable=False)
+        self.fanStatus = self.add(npyscreen.TitleText, name="FAN :", value="", editable=False)
+        self.defrostStatus = self.add(npyscreen.TitleText, name="DEFROST :", value="", editable=False)
+        self.alarm = self.add(npyscreen.TitleText, name="ALARM  :", value="", editable=False)
         
-        self.monitorSwitch = self.add(npyscreen.Checkbox, name = "Write to file", scroll_exit=True, rely=15)
+        self.monitorSwitch = self.add(npyscreen.Checkbox, name = "Write to file", scroll_exit=True, rely=18)
         self.writeToFile = self.monitorSwitch.value
         self.outputFilename = self.add(npyscreen.TitleFilename, name="Output file :", value="test.csv")
 #        self.parentApp.setNextForm(None)
@@ -63,6 +71,16 @@ class ECP202ControlPanel(npyscreen.ActionForm):
             else:
                 self.tset.value='Error enabling defrost'
 
+        if (self.fanSwitch.value != self.fanSettings):
+            if (self.fanSwitch.value):
+                r=self.ecp202.setFanSettings(0)
+            else:
+                r=self.ecp202.setFanSettings(1)
+            if (r==0):
+                self.fanSettings=self.fanSwitch.value
+            else:
+                self.tset.value='Error changing fan settings'
+
         if (self.switch.value != self.chStatus):
             if (self.switch.value):
                 r=self.ecp202.start()
@@ -87,10 +105,14 @@ class ECP202ControlPanel(npyscreen.ActionForm):
             status=self.ecp202.getIOStatus()
             alarm=self.ecp202.getAlarmStatus()
             self.tmon.value="%3.1f C"%(t)
-            self.status.value="%d"%(status)
+            self.compressorStatus.value="%d"%((status&self.ecp202.COMPR_STATUS_MASK)>0)
+            self.fanStatus.value="%d"%((status&self.ecp202.FAN_STATUS_MASK)>0)
+            self.defrostStatus.value="%d"%((status&self.ecp202.DEFROST_STATUS_MASK)>0)
             self.alarm.value="%d"%(alarm)
             self.tmon.display()
-            self.status.display()
+            self.compressorStatus.display()
+            self.fanStatus.display()
+            self.defrostStatus.display()
             self.alarm.display()
             if (self.writeToFile):
                 self.csvWriter.writerow([str(int(self.chStatus)),str(self.tset_target),str(t),str(status),str(alarm),str(time.time())])

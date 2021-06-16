@@ -27,6 +27,9 @@ class ECP202:
         self.DEVICE_STATUS_REGISTER = 1536
         self.STANDBY_MASK = 0x1
         self.DEFROST_MASK = 0x4
+        self.COMPR_STATUS_MASK = 0x1
+        self.DEFROST_STATUS_MASK = 0x2
+        self.FAN_STATUS_MASK = 0x4
 
     def getRegister(self,register):
         try:
@@ -37,7 +40,7 @@ class ECP202:
 
     def setRegister(self,register,value):
         try:
-            write_register(register, value, functioncode=6)
+            valu=self.instrument.write_register(register, value, functioncode=6)
             return 0
         except IOError:
             print("Failed to write to instrument")
@@ -108,7 +111,7 @@ class ECP202:
         return value
 
     def start(self):
-        status=getDeviceStatus()
+        status=self.getDeviceStatus()
         if (status&self.STANDBY_MASK): # 1 means standby
             #put on 
             value=self.STANDBY_MASK<<8
@@ -118,7 +121,7 @@ class ECP202:
             return 0 #already on
 
     def standby(self):
-        status=getDeviceStatus()
+        status=self.getDeviceStatus()
         if not (status&self.STANDBY_MASK): # 0 means on
             #standby bit and modify bit on 
             value=self.STANDBY_MASK<<8|self.STANDBY_MASK
@@ -128,7 +131,7 @@ class ECP202:
             return 0 #already on
 
     def defrost(self):
-        status=getDeviceStatus()
+        status=self.getDeviceStatus()
         if not (status&self.DEFROST_MASK): # checking if already defrost is on
             #put on 
             value=self.DEFROST_MASK<<8|self.DEFROST_MASK
